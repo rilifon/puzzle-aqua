@@ -120,7 +120,7 @@ grow_vertical = 2
 size_flags_vertical = 0
 mouse_filter = 1
 theme_override_font_sizes/font_size = 20
-text = "+3"
+text = "+13"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -137,7 +137,7 @@ mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_ctcqt")
 
 [node name="Space" type="Control" parent="MarginContainer/Grid/NameContainer1"]
-custom_minimum_size = Vector2(10, 0)
+custom_minimum_size = Vector2(16, 0)
 layout_mode = 2
 
 [node name="Name" type="Label" parent="MarginContainer/Grid/NameContainer1"]
