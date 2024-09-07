@@ -17,6 +17,7 @@ signal left_clicked_hint(idx : int)
 @onready var Vertical = $Vertical
 
 func _ready():
+	Profile.hide_unknown_changed.connect(hide_unknown_changed)
 	Vertical.visible = not is_horizontal
 	Horizontal.visible = is_horizontal
 	for child in Vertical.get_children():
@@ -50,10 +51,36 @@ func setup(grid, hints : Array, editor_mode : bool, swap_water_boat := false) ->
 		if swap_water_boat:
 			boat_hint.move_to_front()
 			container.alignment = BoxContainer.ALIGNMENT_BEGIN
-
+	update_hint_walls()
 
 	await get_tree().process_frame
 	custom_minimum_size = bar.size
+
+func get_water_hint(i: int) -> Hint:
+	var bar = Horizontal if is_horizontal else Vertical
+	for c in bar.get_child(i).get_children():
+		if not c.is_boat:
+			return c
+	return null
+
+func hide_unknown_changed(_on: bool) -> void:
+	update_hint_walls()
+
+func update_hint_walls() -> void:
+	# It looks a bit weird with this
+	if true:
+		return
+	var bar = Horizontal if is_horizontal else Vertical
+	var hide_unknown: bool = Profile.get_option("hide_unknown")
+	for i in bar.get_child_count():
+		var hint: Hint = get_water_hint(i)
+		var is_hidden := hide_unknown and hint.can_be_hidden()
+		var is_prev_hidden: bool = hide_unknown and (i == 0 or get_water_hint(i - 1).can_be_hidden())
+		var is_next_hidden: bool = hide_unknown and (i == bar.get_child_count() - 1 or get_water_hint(i + 1).can_be_hidden())
+		hint.set_hint_visibility(E.Walls.Top, not is_horizontal and not (is_hidden and is_prev_hidden))
+		hint.set_hint_visibility(E.Walls.Bottom, not is_horizontal and not (is_hidden and is_next_hidden))
+		hint.set_hint_visibility(E.Walls.Left, is_horizontal and not (is_hidden and is_prev_hidden))
+		hint.set_hint_visibility(E.Walls.Right, is_horizontal and not (is_hidden and is_next_hidden))
 
 
 func startup(editor_mode : bool, delay : float, fast_startup : bool) -> void:

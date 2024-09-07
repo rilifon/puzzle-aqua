@@ -154,12 +154,15 @@ func alpha_t(text : String, alpha : float) -> String:
 	color.a = alpha
 	return "[color=%s]%s[/color]" % ["#"+color.to_html(true),text]
 
+func can_be_hidden() -> bool:
+	var hidden_or_zero := hint_type == E.HintType.Hidden or hint_type == E.HintType.Zero
+	return not editor_mode and not is_boat and not is_cell_hint and hint_value == -1 and hidden_or_zero
 
 func update_label() -> void:
 	Number.text = ""
 	var value = str(hint_value) if hint_value != -1 else "?"
 	var hidden_or_zero := hint_type == E.HintType.Hidden or hint_type == E.HintType.Zero
-	if not editor_mode and hint_value == -1 and hidden_or_zero  and Profile.get_option("hide_unknown"):
+	if can_be_hidden() and Profile.get_option("hide_unknown"):
 		value = " "
 	if editor_mode and (value == "0" or value == "?"):
 		value = "  "+value+"  " 
