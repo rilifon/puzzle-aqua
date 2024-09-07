@@ -96,32 +96,22 @@ class SteamDownloader extends Node:
 		if not is_instance_valid(icon):
 			return
 		var image: Image = null
-		var pname =  Steam.getFriendPersonaName(steam_id)
-		print("starting icon for %s" % pname)
 		if SteamDownloader.cache.has(steam_id):
-			print("%s in cache" % pname)
 			image = SteamDownloader.cache[steam_id]
 		else:
 			await SteamDownloader.mutex.lock()
-			print("Getting steam image for %s = %s" % [steam_id, pname])
 			if SteamManager.steam.requestUserInformation(steam_id, false):
-				print("Didn't have user")
 				await SteamManager.steam.persona_state_change
-			print("get img %s" % pname)
 			SteamManager.steam.getPlayerAvatar(SteamManager.steam.AVATAR_LARGE, steam_id)
 			var ret: Array = await SteamManager.steam.avatar_loaded
-			print("got img %s" % pname)
 			if not canceled and ret != null and len(ret) > 2 and ret[1] > 0:
 				image = Image.create_from_data(ret[1], ret[1], false, Image.FORMAT_RGBA8, ret[2])
 				image.generate_mipmaps()
 				SteamDownloader.cache[steam_id] = image
-				print("ok img %s" % pname)
 			SteamDownloader.mutex.unlock()
-			print("done %s" % pname)
 		if not canceled and image != null and is_instance_valid(icon):
 			icon.texture = ImageTexture.create_from_image(image)
-			print("set icon %s" % pname)
-		print("done for %s" % pname)
+
 	func add_image(icon: TextureRect, steam_id: int) -> void:
 		icons.append(icon)
 		steam_ids.append(steam_id)
@@ -141,7 +131,7 @@ func display_day(data: RecurringMarathon.LeaderboardData, date: String) -> void:
 	add_child(cur_downloader)
 	steam_downloader = SteamDownloader.new() if SteamManager.enabled else null
 	# It is bugged and probably crashing the game
-	#steam_downloader = null
+	steam_downloader = null
 	if steam_downloader != null:
 		add_child(steam_downloader)
 	Grid.get_node("Date").text = date
