@@ -7,11 +7,17 @@ enum FlairId {
 	Dlc,
 	MarvInc,
 	Functional,
+	SpeedRun,
 	# Dlc starts at 9001, and increment by 1 per DLC
 	ExtraIslandStart = 9000,
 	Dev = 9999,
 	# Pro ids start at 10000, on 2024-02, and increment 1 by month
 	ProStart = 10000,
+}
+
+const SPEEDRUNNERS_STEAM := {
+	76561198046896163: 'yan', 76561198046336325: 'rica', 76561198098467521: 'pudim',
+	76561199027402112: 'salekijo', 76561198012644878: 'SeedyE',
 }
 
 
@@ -70,6 +76,13 @@ static func create_flair(id: int) -> SelectableFlair:
 				"λ",
 				Color.GRAY,
 				"FLAIR_FUNCTIONAL_DESC",
+			)
+		FlairId.SpeedRun:
+			return SelectableFlair.new(
+				FlairId.SpeedRun,
+				"🏃" if not Global.is_mobile else "fast",
+				Color.RED,
+				"FLAIR_SPEEDRUN_DESC",
 			)
 	var S := TranslationServer.get_translation_object(TranslationServer.get_locale())
 	if id >= FlairId.ProStart:
@@ -155,6 +168,8 @@ static func get_flair_list() -> Array[SelectableFlair]:
 		arr.append(create_flair(FlairId.MarvInc))
 	if SteamManager.enabled and SteamManager.steam.isSubscribedApp(1636730):
 		arr.append(create_flair(FlairId.Functional))
+	if SteamManager.enabled and SPEEDRUNNERS_STEAM.has(SteamManager.steam.getSteamID()):
+		arr.append(create_flair(FlairId.SpeedRun))
 	_list = arr
 	return _list
 
