@@ -24,7 +24,7 @@ const MARKER_SIZES = [
 		"icon": preload("res://assets/images/ui/icons/large_brush.png"),
 	},
 ]
-const MARKER_COLORS = [Color(1.0,0.416,0.416), Color(0.1,0.2,1.0), Color(1.0,0.95,0.45)]
+const MARKER_COLORS = [Color(1.0,0.416,0.416), Color(0.1,0.2,1.0), Color(1.0,0.95,0.45), Color("#3adc6b")]
 
 signal brushed_picked(mode : E.BrushMode)
 signal marker_button_toggled(on : bool)
