@@ -48,6 +48,7 @@ var grid
 func _ready():
 	Profile.dark_mode_toggled.connect(update_dark_mode)
 	Profile.bigger_hints_changed.connect(update_bigger_hint)
+	Profile.hide_unknown_changed.connect(hide_unknown_changed)
 	Highlight.modulate.a = 0.0
 	disable_editor()
 	DummyLabel.hide()
@@ -63,6 +64,8 @@ func _ready():
 	update_dark_mode(Profile.get_option("dark_mode"))
 	update_bigger_hint(Profile.get_option("bigger_hints_font"))
 
+func hide_unknown_changed(_on: bool) -> void:
+	update_label()
 
 func _process(dt):
 	Global.alpha_fade_node(dt, Highlight, highlight, HIGHLIGHT_SPEED)
@@ -155,10 +158,13 @@ func alpha_t(text : String, alpha : float) -> String:
 func update_label() -> void:
 	Number.text = ""
 	var value = str(hint_value) if hint_value != -1 else "?"
+	var hidden_or_zero := hint_type == E.HintType.Hidden or hint_type == E.HintType.Zero
+	if not editor_mode and hint_value == -1 and hidden_or_zero  and Profile.get_option("hide_unknown"):
+		value = " "
 	if editor_mode and (value == "0" or value == "?"):
 		value = "  "+value+"  " 
 	if is_boat:
-		set_visible(hint_value != -1 or (hint_type != E.HintType.Zero and hint_type != E.HintType.Hidden))
+		set_visible(hint_value != -1 or not hidden_or_zero)
 	match hint_type:
 		E.HintType.Zero, E.HintType.Hidden:
 			Number.text += value

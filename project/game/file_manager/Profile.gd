@@ -12,6 +12,7 @@ signal daily_notification_changed(on: bool)
 signal unlock_everything_changed(on: bool)
 signal thick_walls_mode_toggled(on: bool)
 signal cell_hint_info_changed()
+signal hide_unknown_changed(on: bool)
 
 const LANGUAGES = [
 	"",
@@ -71,6 +72,7 @@ var options = {
 	"skip_animations": false,
 	"palette": 0, #PaletteShader.Palette.None
 	"leaderboard_visible": true,
+	"hide_unknown": true,
 	# Android only
 	"deadline_for_next_review_request": Time.get_unix_time_from_system() + randf() * 14 * 24 * 60 * 60,
 }

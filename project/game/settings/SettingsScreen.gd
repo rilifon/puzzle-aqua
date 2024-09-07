@@ -114,6 +114,7 @@ func setup_values() -> void:
 	%VsyncContainer/OptionButton.selected = Profile.get_option("vsync")
 	%ShowTimerContainer/CheckBox.set_pressed_no_signal(Profile.get_option("show_timer"))
 	%AllowMistakesContainer/CheckBox.set_pressed_no_signal(Profile.get_option("allow_mistakes"))
+	%HideUnknownContainer/CheckBox.set_pressed_no_signal(Profile.get_option("hide_unknown"))
 	%ProgressOnUnknownContainer/CheckBox.set_pressed_no_signal(Profile.get_option("progress_on_unknown"))
 	%ShowBubblesContainer/CheckBox.set_pressed_no_signal(Profile.get_option("show_bubbles"))
 	%ThickerWallsContainer/CheckBox.set_pressed_no_signal(Profile.get_option("thicker_walls"))
@@ -253,6 +254,11 @@ func _on_show_timer_toggled(on: bool) -> void:
 	Profile.set_option("show_timer", on)
 	Profile.show_timer_changed.emit(on)
 
+
+func _on_hide_unknown_toggled(on: bool) -> void:
+	checkbox_sound(on)
+	Profile.set_option("hide_unknown", on)
+	Profile.hide_unknown_changed.emit(on)
 
 func _on_allow_mistakes_toggled(on: bool) -> void:
 	checkbox_sound(on)

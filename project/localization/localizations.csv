@@ -266,6 +266,7 @@ FRIENDS,Friends,Amigos,Amigos
 SHOW_TIMER,Show timer,Mostrar tempo,Mostrar tempo
 QUITTING,Quitting...,Fechando...,Fechando...
 ALLOW_MISTAKES,Allow mistakes,Permitir erros,Permitir erros
+HIDE_UNKNOWN,"Hide simple ""?"" hints","Esconde dicas ""?"" simples","Esconde dicas ""?"" simples"
 PROGRESS_ON_UNKNOWN,"Color ""?"" hints","Colorir dicas ""?""","Colorir dicas ""?"""
 BIGGER_HINTS,Increase hints' font size,Aumentar fonte de dicas,Aumentar fonte de dicas
 LESS_THREE_MISTAKES,(at most 2 mistakes),(até 2 erros),(até 2 erros)

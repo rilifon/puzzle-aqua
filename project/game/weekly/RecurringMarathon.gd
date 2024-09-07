@@ -227,12 +227,16 @@ func load_and_display_leaderboard(level: Level) -> void:
 	var l_data := await RecurringMarathon.get_leaderboard_data(steam_current_leaderboard())
 	if l_data.size() > 0 and l_data[0].self_idx != -1:
 		already_uploaded = true
+	if not is_instance_valid(display):
+		return
 	# Show today leaderboard as soon as possible
 	display.display(l_data, current_period(), [], "")
 	l_data = []
 	print("Downloaded first ld page in %.1fs" % [watch.elapsed_reset()])
 	var y_data := await RecurringMarathon.get_leaderboard_data(steam_previous_leaderboard())
 	print("Downloaded second ld page in %.1fs" % [watch.elapsed_reset()])
+	if not is_instance_valid(display):
+		return
 	display_leaderboard(display, l_data, y_data, level)
 	
 
