@@ -15,7 +15,7 @@ static func save(also_stats := true) -> void:
 		data.save_stats()
 	FileManager._save_user_data(data)
 
-const VERSION := 8
+const VERSION := 9
 
 var random_levels_completed: Array[int]
 # Used to generate random levels in some order
@@ -41,8 +41,36 @@ var ld_uploads: Dictionary
 # Cached display name from PlayFab
 var display_name: String
 var allow_streak_skip_this_one_time: bool
+# ld completion uploads to do later
+var pending_ld_uploads: Array[PendingUpload]
 
-func _init(random_levels_completed_: Array[int], random_levels_created_: Array[int], endless_completed_: Array[int], endless_good_: Array[int], endless_created_: Array[int], best_streak_: Array[int], current_streak_: Array[int], last_day_: Array[String], monthly_good_dailies_: Array[int], selected_flair_: int, insane_good_levels_: int, replay_completed_: Array[int], ld_uploads_: Dictionary, display_name_: String, allow_streak_skip_this_one_time_: bool) -> void:
+class PendingUpload:
+	var first_failed_unixtime: int
+	var times_failed: int
+	var ld_id: String
+	var time: float
+	var mistakes: int
+	var keep_best: bool
+	func _init(unix: int, fails: int, id: String, t: float, m: int, keep: bool) -> void:
+		first_failed_unixtime = unix
+		times_failed = fails
+		ld_id = id
+		time = t
+		mistakes = m
+		keep_best = keep
+	func get_data() -> Dictionary:
+		return {
+			first_failed = first_failed_unixtime,
+			times_failed = times_failed,
+			ld_id = ld_id,
+			time = time,
+			mistakes = mistakes,
+			keep_best = str(keep_best),
+		}
+	static func from_data(data: Dictionary) -> PendingUpload:
+		return PendingUpload.new(int(data.first_failed), int(data.times_failed), String(data.ld_id), float(data.time), int(data.mistakes), data.keep_best == "true")
+
+func _init(random_levels_completed_: Array[int], random_levels_created_: Array[int], endless_completed_: Array[int], endless_good_: Array[int], endless_created_: Array[int], best_streak_: Array[int], current_streak_: Array[int], last_day_: Array[String], monthly_good_dailies_: Array[int], selected_flair_: int, insane_good_levels_: int, replay_completed_: Array[int], ld_uploads_: Dictionary, display_name_: String, allow_streak_skip_this_one_time_: bool, pending_ld_uploads_: Array[PendingUpload]) -> void:
 	random_levels_completed = random_levels_completed_
 	random_levels_created = random_levels_created_
 	endless_completed = endless_completed_
@@ -58,6 +86,7 @@ func _init(random_levels_completed_: Array[int], random_levels_created_: Array[i
 	ld_uploads = ld_uploads_
 	display_name = display_name_
 	allow_streak_skip_this_one_time = allow_streak_skip_this_one_time_
+	pending_ld_uploads = pending_ld_uploads_
 
 func get_data() -> Dictionary:
 	var d := {
@@ -75,6 +104,7 @@ func get_data() -> Dictionary:
 		insane_good_levels = insane_good_levels,
 		replay_completed = replay_completed,
 		ld_uploads = ld_uploads,
+		pending_ld_uploads = pending_ld_uploads.map(func(up): return up.get_data()),
 	}
 	if display_name != "":
 		d.display_name = display_name
@@ -134,6 +164,29 @@ func bump_monthy_good_dailies(date: String) -> int:
 	monthly_good_dailies[idx] += 1
 	return monthly_good_dailies[idx]
 
+func add_ld_completion_upload_failure(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool) -> void:
+	pending_ld_uploads.append(PendingUpload.new(RecurringMarathon._unixtime(), 1, leaderboard_id, time_secs, mistakes, keep_best))
+
+func try_pending_uploads() -> void:
+	if pending_ld_uploads.is_empty():
+		return
+	print("Will try to re-upload previously failed leaderboard entry.")
+	var ups: Array[PendingUpload] = []
+	ups.assign(pending_ld_uploads)
+	pending_ld_uploads.clear()
+	for up in ups:
+		var success := await RecurringMarathon.upload_leaderboard(up.ld_id, Level.WinInfo.new(true, up.mistakes, up.mistakes, up.time), up.keep_best, false)
+		if not success:
+			up.times_failed += 1
+			if up.times_failed >= 5 and up.first_failed_unixtime < RecurringMarathon._unixtime() - 2 * 24 * 60 * 60:
+				print("Failed too many times, won't retry upload: %s" % [up.get_data()])
+			else:
+				print("Leaderboard upload still failed, will try again later.")
+				pending_ld_uploads.append(up)
+		else:
+			print("Success on previous ld upload failure: %s" % [up.get_data()])
+	UserData.save()
+
 static func load_data(data_: Variant) -> UserData:
 	var completed: Array[int] = []
 	var created: Array[int] = []
@@ -146,6 +199,7 @@ static func load_data(data_: Variant) -> UserData:
 	var last_day_a: Array[String] = ["", ""]
 	var replay_completed_a: Array[int] = [0, 0]
 	var allow_streak_skip := false
+	var pending_ld: Array[PendingUpload] = []
 	if data_ == null:
 		for i in RandomHub.Difficulty.size():
 			completed.append(0)
@@ -154,7 +208,7 @@ static func load_data(data_: Variant) -> UserData:
 			endless.append(0)
 			endless_g.append(0)
 			endless_c.append(0)
-		return UserData.new(completed, created, endless, endless_g, endless_c, best_streak_a, cur_streak_a, last_day_a, monthly, -1, 0, replay_completed_a, {}, "", false)
+		return UserData.new(completed, created, endless, endless_g, endless_c, best_streak_a, cur_streak_a, last_day_a, monthly, -1, 0, replay_completed_a, {}, "", false, pending_ld)
 	var data: Dictionary = data_
 	if data.version < 2:
 		data.version = 2
@@ -183,6 +237,9 @@ static func load_data(data_: Variant) -> UserData:
 		allow_streak_skip = true
 		data.version = 8
 		data.ld_uploads = {}
+	if data.version < 9:
+		data.version = 9
+		data.pending_ld_uploads = []
 	if data.version != VERSION:
 		push_error("Invalid version %s, expected %d" % [data.version, VERSION])
 	completed.assign(data.random_levels_completed)
@@ -195,4 +252,6 @@ static func load_data(data_: Variant) -> UserData:
 	cur_streak_a.assign(data.current_streak)
 	last_day_a.assign(data.last_day)
 	replay_completed_a.assign(data.replay_completed)
-	return UserData.new(completed, created, endless, endless_g, endless_c, best_streak_a, cur_streak_a, last_day_a, monthly, int(data.selected_flair), data.insane_good_levels, replay_completed_a, data.ld_uploads, data.get("display_name", ""), allow_streak_skip)
+	for up in data.pending_ld_uploads:
+		pending_ld.append(PendingUpload.from_data(up))
+	return UserData.new(completed, created, endless, endless_g, endless_c, best_streak_a, cur_streak_a, last_day_a, monthly, int(data.selected_flair), data.insane_good_levels, replay_completed_a, data.ld_uploads, data.get("display_name", ""), allow_streak_skip, pending_ld)

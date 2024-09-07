@@ -54,6 +54,7 @@ func _ready():
 	Camera.position = cam_pos.menu
 	AudioManager.start_bgm_loop()
 	UserData.current().save_stats()
+	UserData.current().try_pending_uploads()
 	
 	if Global.is_demo:
 		%MobileHBox.hide()

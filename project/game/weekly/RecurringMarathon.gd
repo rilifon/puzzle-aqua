@@ -219,6 +219,7 @@ func gen_and_play(push_scene: bool) -> void:
 
 func load_and_display_leaderboard(level: Level) -> void:
 	var watch := Stopwatch.new()
+	await UserData.current().try_pending_uploads()
 	var display: LeaderboardDisplay =  LeaderboardDisplay.get_or_create(level, tr_name, true)
 	if not display.is_node_ready():
 		await display.ready
@@ -249,15 +250,16 @@ static func get_my_flair() -> SteamFlair:
 	else:
 		return flair.to_steam_flair()
 
-static func upload_leaderboard(l_id: String, info: Level.WinInfo, keep_best: bool) -> void:
+static func upload_leaderboard(l_id: String, info: Level.WinInfo, keep_best: bool, save_pending := true) -> bool:
 	# Steam needs to create the leaderboards dinamically
 	await SteamManager.ld_mutex.lock()
 	await StoreIntegrations.leaderboard_create_if_not_exists(l_id, StoreIntegrations.SortMethod.SmallestFirst)
 	var details: LeaderboardDetails = null
 	if SteamIntegration.available():
 		details = LeaderboardDetails.new(get_my_flair())
-	await StoreIntegrations.leaderboard_upload_completion(l_id, info.time_secs, info.total_marathon_mistakes, keep_best, LeaderboardDetails.to_arr(details))
+	var success := await StoreIntegrations.leaderboard_upload_completion(l_id, info.time_secs, info.total_marathon_mistakes, keep_best, LeaderboardDetails.to_arr(details), save_pending)
 	SteamManager.ld_mutex.unlock()
+	return success
 
 class ListEntry:
 	var global_rank: int

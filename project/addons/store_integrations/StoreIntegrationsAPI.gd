@@ -108,11 +108,16 @@ func leaderboard_upload_score(leaderboard_id: String, score: float, keep_best :=
 		UserData.save(false)
 	return all_success
 
-func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> bool:
+func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array, save_pending := true) -> bool:
 	var all_success := true
 	for impl in impls:
 		if not await impl.leaderboard_upload_completion(leaderboard_id, time_secs, mistakes, keep_best, steam_details):
 			all_success = false
+	if not all_success and save_pending:
+		print("Some ld uploads failed, saving it for later.")
+		# Steam details we get every time
+		UserData.current().add_ld_completion_upload_failure(leaderboard_id, time_secs, mistakes, keep_best)
+		UserData.save()
 	return all_success
 
 func leaderboard_show(leaderboard_id: String, google_timespan := 2, google_collection := 0) -> void:
