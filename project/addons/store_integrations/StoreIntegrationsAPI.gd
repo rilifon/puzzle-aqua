@@ -95,19 +95,25 @@ func leaderboard_create_if_not_exists(leaderboard_id: String, sort_method: SortM
 	for impl in impls:
 		await impl.leaderboard_create_if_not_exists(leaderboard_id, sort_method)
 
-func leaderboard_upload_score(leaderboard_id: String, score: float, keep_best := true, steam_details := PackedInt32Array()) -> void:
+func leaderboard_upload_score(leaderboard_id: String, score: float, keep_best := true, steam_details := PackedInt32Array()) -> bool:
 	if dedup_uploads.has(leaderboard_id) and UserData.current().ld_uploads.get(leaderboard_id, NAN) == score:
 		print("Already uploaded %s to leaderboard %s, skipping." % [score, leaderboard_id])
-		return
+		return true
+	var all_success := true
 	for impl in impls:
-		await impl.leaderboard_upload_score(leaderboard_id, score, keep_best, steam_details)
+		if not await impl.leaderboard_upload_score(leaderboard_id, score, keep_best, steam_details):
+			all_success = false
 	if dedup_uploads.has(leaderboard_id):
 		UserData.current().ld_uploads[leaderboard_id] = score
 		UserData.save(false)
+	return all_success
 
-func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> bool:
+	var all_success := true
 	for impl in impls:
-		await impl.leaderboard_upload_completion(leaderboard_id, time_secs, mistakes, keep_best, steam_details)
+		if not await impl.leaderboard_upload_completion(leaderboard_id, time_secs, mistakes, keep_best, steam_details):
+			all_success = false
+	return all_success
 
 func leaderboard_show(leaderboard_id: String, google_timespan := 2, google_collection := 0) -> void:
 	for impl in impls:

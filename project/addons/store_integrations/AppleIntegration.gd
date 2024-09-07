@@ -84,7 +84,7 @@ func _ld_map(id: String) -> String:
 		return "weekly"
 	return ""
 
-func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: bool, _steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: bool, _steam_details: PackedInt32Array) -> bool:
 	var id := _ld_map(leaderboard_id)
 	if id != "":
 		var res = apple.post_score({
@@ -93,12 +93,16 @@ func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: 
 		})
 		if res != OK:
 			push_warning("Error calling post_score: %s" % [res])
+			return false
 		else:
-			await event
+			var resp: Dictionary = await event
+			if resp != null and resp.get("type") == "post_score" and resp.get("result") != "ok":
+				return false
+	return true
 
-func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> bool:
 	# 1h penalty
-	await leaderboard_upload_score(leaderboard_id, time_secs + 60 * 60 * mistakes, keep_best, steam_details)
+	return await leaderboard_upload_score(leaderboard_id, time_secs + 60 * 60 * mistakes, keep_best, steam_details)
 
 func leaderboard_show(leaderboard_id: String, _google_timespan: int, _google_collection: int) -> void:
 	if not await _try_authenticate():

@@ -210,10 +210,12 @@ func _get_ld_version(id: String) -> int:
 		return (monday_unix - Time.get_unix_time_from_datetime_string("2024-04-15")) / (7 * 24 * 60 * 60)
 	return -1
 
-func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: bool, _steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: bool, _steam_details: PackedInt32Array) -> bool:
 	var id := _get_ld_mapping(leaderboard_id)
-	if id == "" or not authenticated():
-		return
+	if id == "":
+		return true
+	if not authenticated():
+		return false
 	var value := int(score)
 	if sort_method.get(leaderboard_id, StoreIntegrations.SortMethod.SmallestFirst) == StoreIntegrations.SortMethod.SmallestFirst:
 		value = -value
@@ -232,13 +234,15 @@ func leaderboard_upload_score(leaderboard_id: String, score: float, _keep_best: 
 	var res = await cb.called
 	if res is Dictionary and res.get("status", "") == "OK":
 		print("Playfab leaderboard upload success")
+		return true
 	else:
 		print("Playfab leaderboard upload failure: %s" % [res])
+		return false
 
-func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> bool:
 	# We need to store both mistakes and time in the same score.
 	# Mistakes take priority.
-	await leaderboard_upload_score(leaderboard_id, minf(time_secs, RecurringMarathon.MAX_TIME - 1) + minf(mistakes, 1000) * RecurringMarathon.MAX_TIME, keep_best, steam_details)
+	return await leaderboard_upload_score(leaderboard_id, minf(time_secs, RecurringMarathon.MAX_TIME - 1) + minf(mistakes, 1000) * RecurringMarathon.MAX_TIME, keep_best, steam_details)
 
 func leaderboard_show(_leaderboard_id: String, _google_timespan: int, _google_collection: int) -> void:
 	await null

@@ -40,21 +40,23 @@ func _get_ld_id(leaderboard_id: String) -> int:
 		await _store_ld_find_result(steam_name)
 	return ld_steam_name_to_id.get(steam_name, -1)
 
-func leaderboard_upload_score(leaderboard_id: String, score: float, keep_best: bool, steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_score(leaderboard_id: String, score: float, keep_best: bool, steam_details: PackedInt32Array) -> bool:
 	var id := await _get_ld_id(leaderboard_id)
 	if id <= 0:
-		return
+		return true
 	steam.uploadLeaderboardScore(int(score), keep_best, steam_details, id)
 	var ret: Array = await steam.leaderboard_score_uploaded
 	if not ret[0]:
 		push_warning("Failed to upload leaderboard entry for %d (%s) [%s]" % [id, leaderboard_id, ret])
+		return false
 	else:
 		print("Did upload to leaderboard %d" % [id])
+		return true
 
-func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> void:
+func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mistakes: int, keep_best: bool, steam_details: PackedInt32Array) -> bool:
 	# We need to store both mistakes and time in the same score.
 	# Mistakes take priority.
-	await leaderboard_upload_score(leaderboard_id, minf(time_secs, RecurringMarathon.MAX_TIME - 1) + minf(mistakes, 1000) * RecurringMarathon.MAX_TIME, keep_best, steam_details)
+	return await leaderboard_upload_score(leaderboard_id, minf(time_secs, RecurringMarathon.MAX_TIME - 1) + minf(mistakes, 1000) * RecurringMarathon.MAX_TIME, keep_best, steam_details)
 
 func leaderboard_download_completion(leaderboard_id: String, start: int, count: int) -> StoreIntegrations.LeaderboardData:
 	var id := await _get_ld_id(leaderboard_id)
