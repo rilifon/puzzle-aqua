@@ -28,7 +28,8 @@ class ImageDowloader extends Node:
 	func cancel() -> void:
 		canceled = true
 		for req in reqs:
-			req.cancel_request()
+			if is_instance_valid(req):
+				req.cancel_request()
 		queue_free()
 	func add_image(icon: TextureRect, url: String) -> void:
 		if ImageDowloader.cache.has(url):
@@ -44,13 +45,15 @@ class ImageDowloader extends Node:
 		add_child(req)
 		req.request_completed.connect(_request_completed.bind(icons.size() - 1, req))
 	func continue_downloads() -> void:
-		if not is_inside_tree():
+		if canceled or not is_inside_tree():
 			return
 		while current_downloads < 5 and next_download_to_start < reqs.size():
 			current_downloads += 1
 			reqs[next_download_to_start].request(urls[next_download_to_start])
 			next_download_to_start += 1
 	func _request_completed(result: int, _response_code: int, _headers, body: PackedByteArray, i: int, req: HTTPRequest) -> void:
+		if canceled:
+			return
 		print("[%d] Finished downloading %s" % [i, urls[i]])
 		remove_child(req)
 		req.queue_free()
