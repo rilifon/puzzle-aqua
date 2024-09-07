@@ -83,6 +83,7 @@ stretch_mode = 5
 [node name="PlayerBG" type="Panel" parent="MarginContainer/Grid/Icon1"]
 modulate = Color(0.0156863, 0.105882, 0.219608, 0.513726)
 show_behind_parent = true
+layout_mode = 0
 offset_left = 10.0
 offset_top = -10.0
 offset_right = 1140.0
@@ -139,6 +140,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_5mbkq")
 [node name="Name" type="Label" parent="MarginContainer/Grid/NameContainer1"]
 layout_mode = 2
 size_flags_horizontal = 3
+mouse_filter = 1
 theme_override_font_sizes/font_size = 60
 text = "Person name"
 text_overrun_behavior = 3

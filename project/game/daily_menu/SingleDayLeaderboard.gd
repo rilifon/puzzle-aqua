@@ -151,6 +151,7 @@ func display_day(data: RecurringMarathon.LeaderboardData, date: String) -> void:
 		pos.text = "%d." % item.global_rank
 		var name_ := Grid.get_node("NameContainer1").duplicate()
 		name_.get_node("Name").text = item.text
+		name_.get_node("Name").tooltip_text = item.text
 		var flair: Label = name_.get_node("Flair")
 		var sflair: SelectableFlair = FlairManager.create_flair(item.flair.id) if item.flair != null else null
 		flair.visible = sflair != null
