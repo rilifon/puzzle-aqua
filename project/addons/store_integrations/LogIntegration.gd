@@ -14,7 +14,7 @@ func leaderboard_upload_completion(leaderboard_id: String, time_secs: float, mis
 	print("leaderboard_upload_completion(%s, %.1f, %d, %s, %s)" % [leaderboard_id, time_secs, mistakes, keep_best, steam_details])
 
 func leaderboard_download_completion(leaderboard_id: String, start: int, count: int) -> StoreIntegrations.LeaderboardData:
-	print("leaderboard_download_completiona(%s, %d, %d)" % [leaderboard_id, start, count])
+	print("leaderboard_download_completion(%s, %d, %d)" % [leaderboard_id, start, count])
 	return null
 
 func leaderboard_show(leaderboard_id: String, google_timespan: int, google_collection: int) -> void:
